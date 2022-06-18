@@ -43,7 +43,9 @@
        (run-git "checkout" "--orphan" branch)
        ))))
 
-(checkout)
+(defn rm [files]
+  (when (seq files)
+    (apply run-git "rm" "--ignore-unmatch" "-r" "-f" files)))
 
 (defn user []
   (let [git-name  (run-git "config" "user.name")

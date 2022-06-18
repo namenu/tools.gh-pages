@@ -1,6 +1,18 @@
 (ns gh-pages.api
-  (:require [gh-pages.git :as git]))
+  (:require [gh-pages.git :as git]
+            [gh-pages.fs :as fs]))
 
+
+(defn clear-slate
+  "`git rm` every files under `dest`"
+  []
+  (let [dest "dummy"
+        path (fs/path-join (fs/cwd) dest)
+        files (->> (file-seq (clojure.java.io/file path))
+                   (map str))]
+    (git/rm files)))
+
+(clear-slate)
 
 (defn publish
   "push a git branch to a remote
