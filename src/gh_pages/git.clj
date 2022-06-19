@@ -22,26 +22,27 @@
 (defn fetch [url]
   (run-git "fetch" url))
 
-(defn checkout
+(defn clean []
+  (run-git "clean" "-f" "-d"))
+
+(defn checkout-orphaned
   "remote에 해당하는 ref가
    없으면, --orphan 옵션을 두어 마지막 커밋만 체크아웃
    있으면, clean & reset
   "
-  ([]
-   (checkout "origin" "gh-pages"))
-  ([remote branch]
-   (let [ref    (str remote "/" branch)
-         _      (println "Checking out" ref)
-         result (run-git "ls-remote" "--exit-code" "." ref)]
-     (if (= 0 (:exit result))
-       ;; already exists
-       (do
-         (run-git "checkout" branch)
-         (run-git "clean" "-f" "-d")
-         (run-git "reset" "--hard" ref))
-       ;; fresh checkout
-       (run-git "checkout" "--orphan" branch)
-       ))))
+  [remote branch]
+  (let [ref    (str remote "/" branch)
+        _      (println "Checking out" ref)
+        result (run-git "ls-remote" "--exit-code" "." ref)]
+    (if (= 0 (:exit result))
+      ;; already exists
+      (do
+        (run-git "checkout" branch)
+        (clean)
+        (run-git "reset" "--hard" ref))
+      ;; fresh checkout
+      (run-git "checkout" "--orphan" branch)
+      )))
 
 (defn rm [files]
   (when (seq files)
@@ -58,9 +59,10 @@
     (if has-diff?
       (run-git "commit" "-m" message))))
 
-(add-all)
-(run-git "diff-index" "--quiet" "HEAD")
-(commit "commit test")
+(defn push
+  "ex) git push --tags origin gh-pages"
+  [remote branch]
+  (run-git "push" #_"--tags" remote branch))
 
 (defn user []
   (let [git-name  (run-git "config" "user.name")
@@ -75,6 +77,8 @@
     (if (= 0 (:exit git-url))
       (str/trim (:out git-url)))))
 
-(run-git "config" "--get" "remote.origin.url")
 
-(fetch (remote-url))
+(comment
+  (run-git "config" "--get" "remote.origin.url")
+
+  (fetch (remote-url)))

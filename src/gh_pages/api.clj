@@ -1,5 +1,6 @@
 (ns gh-pages.api
-  (:require [gh-pages.git :as git]
+  (:require [clojure.java.io :as jio]
+            [gh-pages.git :as git]
             [gh-pages.fs :as fs]))
 
 
@@ -7,52 +8,88 @@
   "`git rm` every files under `dest`"
   [dest]
   (print "removing files")
-  (let [path (fs/path-join (fs/cwd) dest)
-        files (->> (file-seq (clojure.java.io/file path))
+  (let [path  (fs/path-join (fs/cwd) dest)
+        files (->> (file-seq (jio/file path))
                    (map str))]
     (git/rm files)))
 
-(defn copy-files [files base-path dest]
-  (print "copying files")
-  (let [path (fs/path-join (fs/cwd) dest)])
-  )
+(defn copy-files
+  "
+  base-path 하위에 있는 files 목록 (상대적인 위치)를 받아서,
+  dest-dir 하위에 복사한다.
+  "
+  [files _base-path dest-dir]
+  (println "copying files")
+  (let [dest-dir (fs/path-join (fs/cwd) dest-dir)]
+    (->> files
+         (run! (fn [src]
+                 (let [dest (fs/path-join dest-dir src)]
+                   (fs/copy-file src dest)))))))
 
 (defn publish
   "push a git branch to a remote
 
-  options:
-    :add - do not clean dir before publish, default to false
+  workflow:
+    1. user를 구해서 (옵션 제공) + throw ex
+    2. repo를 구함 (옵션 제공) + throw ex
+    3. git clean ???
+    4. git fetch
+    5. git checkout origin gh-pages
+    6. (optional) git deleteRef (branch)
+    7. remove files at dest
+    8. copying files from src to dest
+      - globbed files: basePath/dotfiles?
+    9. git add all
+    10. user.name, user.email 확인 (1번)
+    11. git commit with message
+    12. git push
+
+  arguments:
+    base-dir - source directory contains contents to deploy
+    options
+      :add - do not clean dir before publish, default to false
   "
-  [dir options]
-
-  ;; option
-
-  ;; dir 이 있는지 확인
-  ;; 없으면
-  ;; (throw (ex-info "dir 오류"))
-
+  [base-dir options]
+  (when-not (fs/dir? base-dir)
+    (throw (ex-info "base directory does not exists" {})))
 
   ;; 싱크할 대상 구함 glob
   ;; 아무것도 없으면
   ;; (throw (ex-info "배포할 파일이 없음"))
+  (let [target-files (fs/visible-file-seq (jio/file base-dir))]
+    (when-not (seq target-files)
+      (throw (ex-info "no files to sync" {})))
 
-  ;; 메인 플로우
-  ;; 1. user를 구해서 (옵션 제공) + throw ex
-  ;; 2. repo를 구함 (옵션 제공) + throw ex
-  ;; 3. git clean ???
-  ;; 4. git fetch
-  ;; 5. git checkout
-  ;; 6. (optional) git deleteRef (branch)
-  ;; 7. remove files at dest
-  ;; 8. copying files from src to dest
-  ;;   - globbed files: basePath/dotfiles?
-  ;; 9. git add all
-  ;; 10. user.name, user.email 확인 (1번)
-  ;; 11. git commit ("Updates")
-  ;; 12. git push
+    (let [user    (git/user)
+          repo    (git/remote-url)
 
+          remote  "origin"
+          branch  "gh-pages"
+          dest    "."
+          message "Update"
+          ]
+      (when-not user
+        (throw (ex-info "git user info required" {})))
+      (when-not repo
+        (throw (ex-info "git remote url required" {})))
+
+      (git/clean)
+      (git/fetch repo)
+      (git/checkout-orphaned remote branch)
+
+      (clear-slate dest)
+      (copy-files target-files base-dir dest)
+
+      (git/add-all)
+      (git/commit message)
+      (git/push remote branch)
+
+      ))
 
   )
 
-(let [url (git/remote-url)]
-  (git/fetch url))
+(comment
+  (publish "dist" {})
+
+  (let [url (git/remote-url)]
+    (git/fetch url)))
