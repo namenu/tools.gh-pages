@@ -5,14 +5,17 @@
 
 (defn clear-slate
   "`git rm` every files under `dest`"
-  []
-  (let [dest "dummy"
-        path (fs/path-join (fs/cwd) dest)
+  [dest]
+  (print "removing files")
+  (let [path (fs/path-join (fs/cwd) dest)
         files (->> (file-seq (clojure.java.io/file path))
                    (map str))]
     (git/rm files)))
 
-(clear-slate)
+(defn copy-files [files base-path dest]
+  (print "copying files")
+  (let [path (fs/path-join (fs/cwd) dest)])
+  )
 
 (defn publish
   "push a git branch to a remote
@@ -36,10 +39,17 @@
   ;; 메인 플로우
   ;; 1. user를 구해서 (옵션 제공) + throw ex
   ;; 2. repo를 구함 (옵션 제공) + throw ex
-  ;;
-  ;; git clean ???
-  ;; git fetch
-  ;; git checkout
+  ;; 3. git clean ???
+  ;; 4. git fetch
+  ;; 5. git checkout
+  ;; 6. (optional) git deleteRef (branch)
+  ;; 7. remove files at dest
+  ;; 8. copying files from src to dest
+  ;;   - globbed files: basePath/dotfiles?
+  ;; 9. git add all
+  ;; 10. user.name, user.email 확인 (1번)
+  ;; 11. git commit ("Updates")
+  ;; 12. git push
 
 
   )

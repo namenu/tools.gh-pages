@@ -47,6 +47,21 @@
   (when (seq files)
     (apply run-git "rm" "--ignore-unmatch" "-r" "-f" files)))
 
+(defn add-all []
+  (run-git "add" "."))
+
+(defn commit
+  "commit if there are any changes"
+  [message]
+  (printerrln "committing")
+  (let [has-diff? (not= 0 (:exit (run-git "diff-index" "--quiet" "HEAD")))]
+    (if has-diff?
+      (run-git "commit" "-m" message))))
+
+(add-all)
+(run-git "diff-index" "--quiet" "HEAD")
+(commit "commit test")
+
 (defn user []
   (let [git-name  (run-git "config" "user.name")
         git-email (run-git "config" "user.email")]
