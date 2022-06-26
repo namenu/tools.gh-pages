@@ -1,1 +1,2 @@
-{}
+{:paths ["src"]
+ :tools/usage {:ns-default gh-pages.api}}

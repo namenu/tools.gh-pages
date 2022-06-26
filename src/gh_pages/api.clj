@@ -3,8 +3,7 @@
             [gh-pages.git :as git]
             [gh-pages.fs :as fs]))
 
-
-(defn clear-slate
+(defn- clear-slate
   "`git rm` every files under `dest`"
   [dest]
   (print "removing files")
@@ -13,7 +12,7 @@
                    (map str))]
     (git/rm files)))
 
-(defn copy-files
+(defn- copy-files
   "
   base-path 하위에 있는 files 목록 (상대적인 위치)를 받아서,
   dest-dir 하위에 복사한다.
@@ -44,12 +43,19 @@
     11. git commit with message
     12. git push
 
-  arguments:
-    base-dir - source directory contains contents to deploy
-    options
-      :add - do not clean dir before publish, default to false
+  options:
+    :base-dir (required) - source directory contains contents to deploy
+    :remote - git remote to publish, default to 'origin'
+    :branch - git branch to publish, default to 'gh-pages'
+    :dest - destination dir within the destination branch. default to root.
+    :add - do not clean dir before publish, default to false
+    :message - commit message
   "
-  [base-dir options]
+  [{:keys [base-dir remote branch dest message] :as _args
+    :or   {remote  "origin"
+           branch  "gh-pages"
+           dest    "."
+           message "Update"}}]
   (when-not (fs/dir? base-dir)
     (throw (ex-info "base directory does not exists" {})))
 
@@ -61,13 +67,7 @@
       (throw (ex-info "no files to sync" {})))
 
     (let [user    (git/user)
-          repo    (git/remote-url)
-
-          remote  "origin"
-          branch  "gh-pages"
-          dest    "."
-          message "Update"
-          ]
+          repo    (git/remote-url)]
       (when-not user
         (throw (ex-info "git user info required" {})))
       (when-not repo
@@ -89,7 +89,7 @@
   )
 
 (comment
-  (publish "dist" {})
+  (publish {:base-dir "dist"})
 
   (let [url (git/remote-url)]
     (git/fetch url)))
