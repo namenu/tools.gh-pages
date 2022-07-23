@@ -38,6 +38,7 @@
       (assert true)
       )
   (jio/make-parents dir)
+  ;; TODO: can't clone when there's no such branch
   (run-git "clone" repo dir
            "--branch" branch
            "--single-branch"

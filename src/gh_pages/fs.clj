@@ -25,8 +25,9 @@
          (remove #(or (.isHidden %) (.isDirectory %))))))
 
 (defn copy-file [from to]
+  (println "copy-file" from to)
   (let [to (jio/file to)]
-    ;(println "copy-file" (str from) (str to))
+    (jio/make-parents to)
     (jio/copy (jio/file from) to)))
 
 (defn copy-files
@@ -35,7 +36,7 @@
   dest-dir 하위에 복사한다.
   "
   [files base-dir dest-dir]
-  (let [base-path  (Path/of (.toURI (jio/file base-dir)))
+  (let [base-path  (Path/of (.toURI (jio/file (str base-dir))))
         relativize (fn [p]
                      (-> base-path
                          (.relativize (Paths/get (.toURI p)))
