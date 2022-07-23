@@ -12,6 +12,12 @@ clj -Ttools install-latest :lib io.github.namenu/tools.gh-pages :as gh-pages
 
 ## usage
 
+publish contents of `/dist` to `main` branch
+
+```sh
+clj -Tgh-pages publish :base-dir dist :branch main :repo https://github.com/some-org/some-repo
+```
+
 the list of commands
 
 ```sh
