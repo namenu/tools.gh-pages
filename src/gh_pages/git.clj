@@ -1,7 +1,12 @@
 ;; not a general git wrapping interface
 (ns gh-pages.git
-  (:require [clojure.string :as str])
-  )
+  (:require [clojure.java.io :as jio]
+            [clojure.string :as str]
+            [gh-pages.fs :as fs])
+  (:import (java.io File)))
+
+;; git working dir
+(def ^:dynamic ^File *dir* nil)
 
 (defn printerrln [& msgs]
   (binding [*out* *err*]
@@ -10,17 +15,37 @@
 ;; from tools.gitlibs
 (defn- run-git
   [& args]
-  (let [command-args (cons "git" args)]
-    ;(apply printerrln command-args)
+  (let [command-args (cons "git" (map str args))]
+    (apply printerrln command-args)
     (let [proc-builder (ProcessBuilder. ^java.util.List command-args)
+          _            (.directory proc-builder *dir*)
           proc         (.start proc-builder)
           exit         (.waitFor proc)
           out          (slurp (.getInputStream proc))
           err          (slurp (.getErrorStream proc))]
       {:args command-args, :exit exit, :out out, :err err})))
 
+(defmacro with-dir [dir & forms]
+  `(binding [*dir* (jio/file ~dir)]
+     ~@forms))
+
+(defn shallow-clone
+  "(shallow)clone repo into dir.
+  if the dir already exists, make ensure its remote correctly targeted."
+  [dir repo remote branch]
+  #_(if (fs/dir? dir)
+      ;; TODO: verify if remote url directs repo url
+      (assert true)
+      )
+  (jio/make-parents dir)
+  (run-git "clone" repo dir
+           "--branch" branch
+           "--single-branch"
+           "--origin" remote
+           "--depth" 1))
+
 (defn fetch [url]
-  (run-git "fetch" url))
+  (run-git "fetch" (str url)))
 
 (defn clean []
   (run-git "clean" "-f" "-d"))
@@ -31,7 +56,8 @@
    있으면, clean & reset
   "
   [remote branch]
-  (let [ref    (str remote "/" branch)
+  (let [branch (str branch)
+        ref    (str remote "/" branch)
         _      (println "Checking out" ref)
         result (run-git "ls-remote" "--exit-code" "." ref)]
     (if (= 0 (:exit result))
@@ -44,7 +70,7 @@
       (run-git "checkout" "--orphan" branch)
       )))
 
-(defn rm [files]
+(defn rm [& files]
   (when (seq files)
     (apply run-git "rm" "--ignore-unmatch" "-r" "-f" files)))
 
@@ -71,9 +97,8 @@
       {::user  (str/trim (:out git-name))
        ::email (str/trim (:out git-email))})))
 
-(defn remote-url []
-  (let [remote  "origin"
-        git-url (run-git "config" "--get" (str "remote." remote ".url"))]
+(defn remote-url [remote]
+  (let [git-url (run-git "config" "--get" (str "remote." remote ".url"))]
     (if (= 0 (:exit git-url))
       (str/trim (:out git-url)))))
 

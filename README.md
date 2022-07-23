@@ -12,6 +12,18 @@ clj -Ttools install-latest :lib io.github.namenu/tools.gh-pages :as gh-pages
 
 ## usage
 
+the list of commands
+
+```sh
+clj -A:deps -Tgh-pages help/dir
+```
+
+docstrings
+
+```sh
+clj -A:deps -Tgh-pages help/doc 
+```
+
 ```sh
 clj -Tgh-pages publish :base-dir dist
 ```
