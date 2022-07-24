@@ -1,8 +1,8 @@
 ;; not a general git wrapping interface
-(ns gh-pages.git
+(ns namenu.tools.gh-pages.git
   (:require [clojure.java.io :as jio]
             [clojure.string :as str]
-            [gh-pages.fs :as fs])
+            [namenu.tools.gh-pages.fs :as fs])
   (:import (java.io File)))
 
 ;; git working dir

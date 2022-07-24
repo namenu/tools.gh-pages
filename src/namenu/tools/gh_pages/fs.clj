@@ -1,4 +1,4 @@
-(ns gh-pages.fs
+(ns namenu.tools.gh-pages.fs
   (:require [clojure.java.io :as jio])
   (:import (java.nio.file Paths Path)
            (java.io File)))

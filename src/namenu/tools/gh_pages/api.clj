@@ -1,6 +1,6 @@
-(ns gh-pages.api
-  (:require [gh-pages.git :as git]
-            [gh-pages.fs :as fs]))
+(ns namenu.tools.gh-pages.api
+  (:require [namenu.tools.gh-pages.git :as git]
+            [namenu.tools.gh-pages.fs :as fs]))
 
 (def ^:private cached-dir ".cache/gh-pages")
 
